@@ -1,0 +1,76 @@
+# seq.yaml
+# Seq - centralized structured log aggregation server
+# Collects logs from all microservices via Serilog
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: seq-pvc
+  namespace: university
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seq
+  namespace: university
+  labels:
+    app: seq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: seq
+  template:
+    metadata:
+      labels:
+        app: seq
+    spec:
+      containers:
+        - name: seq
+          image: datalust/seq:latest
+          ports:
+            - containerPort: 80     # Web UI
+            - containerPort: 5341   # Log ingestion
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: SEQ_FIRSTRUN_NOAUTHENTICATION
+              value: "true"
+          volumeMounts:
+            - name: seq-storage
+              mountPath: /data
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+      volumes:
+        - name: seq-storage
+          persistentVolumeClaim:
+            claimName: seq-pvc
+---
+# Service exposes Seq UI (port 80) and ingestion endpoint (port 5341)
+apiVersion: v1
+kind: Service
+metadata:
+  name: seq
+  namespace: university
+spec:
+  selector:
+    app: seq
+  ports:
+    - name: ui
+      port: 80
+      targetPort: 80
+    - name: ingestion
+      port: 5341
+      targetPort: 5341
+  type: ClusterIP

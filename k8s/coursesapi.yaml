@@ -1,0 +1,68 @@
+# coursesapi.yaml
+# Courses microservice - REST API + RabbitMQ publisher (7.x) + MassTransit publisher
+# Publishes enrollment events (raw RabbitMQ) and CourseCreatedEvent (MassTransit)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coursesapi
+  namespace: university
+  labels:
+    app: coursesapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coursesapi
+  template:
+    metadata:
+      labels:
+        app: coursesapi
+    spec:
+      containers:
+        - name: coursesapi
+          image: coursesapi-individual
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            # Credentials come from the university-secrets Secret (created by deploy.ps1 from .env);
+            # $(VAR) expands env vars defined earlier in this list
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: university-secrets, key: SA_PASSWORD }
+            - name: RABBITMQ_USER
+              valueFrom:
+                secretKeyRef: { name: university-secrets, key: RABBITMQ_USER }
+            - name: RABBITMQ_PASS
+              valueFrom:
+                secretKeyRef: { name: university-secrets, key: RABBITMQ_PASS }
+            - name: ConnectionStrings__CoursesApiContext
+              value: "Server=sqldata;Database=CoursesDB;User Id=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+            - name: RabbitMQ__Uri
+              value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASS)@rabbitmq:5672"
+            - name: Seq__Uri
+              value: "http://seq:5341"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coursesapi
+  namespace: university
+spec:
+  selector:
+    app: coursesapi
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP

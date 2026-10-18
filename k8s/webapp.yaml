@@ -1,0 +1,63 @@
+# webapp.yaml
+# ASP.NET Core MVC Web Application
+# Communicates directly with microservices (REST + gRPC)
+# Demonstrates direct client-to-microservice communication pattern
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp
+  namespace: university
+  labels:
+    app: webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      containers:
+        - name: webapp
+          image: webapp-individual
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: Services__StudentsAPI
+              value: "http://studentsapi:8080"
+            - name: Services__CoursesAPI
+              value: "http://coursesapi:8080"
+            - name: Services__StudentsGrpc
+              value: "http://studentsapi:5001"
+            - name: Seq__Uri
+              value: "http://seq:5341"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+---
+# NodePort service exposes the WebApp externally on port 30090
+# Accessible at http://localhost:30090 from host machine
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp
+  namespace: university
+spec:
+  selector:
+    app: webapp
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      nodePort: 30090
+  type: NodePort

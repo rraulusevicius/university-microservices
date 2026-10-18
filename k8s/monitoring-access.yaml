@@ -1,0 +1,67 @@
+# monitoring-access.yaml
+# NodePort services to access monitoring tools from the host browser
+# These are separate from the ClusterIP services used for internal communication
+---
+# RabbitMQ Management UI - http://localhost:30672
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-external
+  namespace: university
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+    - name: management
+      port: 15672
+      targetPort: 15672
+      nodePort: 30672
+  type: NodePort
+---
+# Seq Log UI - http://localhost:30340
+apiVersion: v1
+kind: Service
+metadata:
+  name: seq-external
+  namespace: university
+spec:
+  selector:
+    app: seq
+  ports:
+    - name: ui
+      port: 80
+      targetPort: 80
+      nodePort: 30340
+  type: NodePort
+---
+# StudentsAPI direct access - http://localhost:30082
+apiVersion: v1
+kind: Service
+metadata:
+  name: studentsapi-external
+  namespace: university
+spec:
+  selector:
+    app: studentsapi
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      nodePort: 30082
+  type: NodePort
+---
+# CoursesAPI direct access - http://localhost:30081
+apiVersion: v1
+kind: Service
+metadata:
+  name: coursesapi-external
+  namespace: university
+spec:
+  selector:
+    app: coursesapi
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      nodePort: 30081
+  type: NodePort

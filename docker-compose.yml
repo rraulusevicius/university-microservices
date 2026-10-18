@@ -1,0 +1,45 @@
+services:
+  coursesapi-individual:
+    image: ${DOCKER_REGISTRY-}coursesapi-individual
+    build:
+      context: .
+      dockerfile: CoursesAPI/Dockerfile
+    depends_on:
+      - sqldata-individual
+      - rabbitmq-individual
+
+  studentsapi-individual:
+    image: ${DOCKER_REGISTRY-}studentsapi-individual
+    build:
+      context: .
+      dockerfile: StudentsAPI/Dockerfile
+    depends_on:
+      - sqldata-individual
+      - rabbitmq-individual
+
+  apigateway-individual:
+    image: ${DOCKER_REGISTRY-}apigateway-individual
+    build:
+      context: .
+      dockerfile: ApiGateway/Dockerfile
+    depends_on:
+      - coursesapi-individual
+      - studentsapi-individual
+
+  sqldata-individual:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+
+  rabbitmq-individual:
+    image: rabbitmq:3-management
+
+  seq-individual:
+    image: datalust/seq:latest
+  
+  webapp-individual:
+    image: ${DOCKER_REGISTRY-}webapp-individual
+    build:
+      context: .
+      dockerfile: WebApp/Dockerfile
+    depends_on:
+      - studentsapi-individual
+      - coursesapi-individual

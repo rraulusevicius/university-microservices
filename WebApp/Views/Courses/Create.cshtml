@@ -1,0 +1,21 @@
+﻿@model WebApp.Models.Course
+
+<h2>Add New Course</h2>
+<p class="text-muted">Creates a course and publishes a MassTransit CourseCreatedEvent</p>
+
+<form method="post">
+    <div class="mb-3">
+        <label class="form-label">Course ID</label>
+        <input asp-for="CourseID" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Title</label>
+        <input asp-for="Title" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Credits</label>
+        <input asp-for="Credits" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-success">Create Course</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>

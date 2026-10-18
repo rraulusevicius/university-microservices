@@ -1,0 +1,74 @@
+# studentsapi.yaml
+# Students microservice - REST API + gRPC server + RabbitMQ subscriber (7.x)
+# Subscribes to enrollment events from CoursesAPI via RabbitMQ
+# Also consumes MassTransit CourseCreatedEvent messages
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: studentsapi
+  namespace: university
+  labels:
+    app: studentsapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: studentsapi
+  template:
+    metadata:
+      labels:
+        app: studentsapi
+    spec:
+      containers:
+        - name: studentsapi
+          image: studentsapi-individual
+          imagePullPolicy: IfNotPresent    # Use locally built image (not from registry)
+          ports:
+            - containerPort: 8080   # REST API
+            - containerPort: 5001   # gRPC
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            # Credentials come from the university-secrets Secret (created by deploy.ps1 from .env);
+            # $(VAR) expands env vars defined earlier in this list
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: university-secrets, key: SA_PASSWORD }
+            - name: RABBITMQ_USER
+              valueFrom:
+                secretKeyRef: { name: university-secrets, key: RABBITMQ_USER }
+            - name: RABBITMQ_PASS
+              valueFrom:
+                secretKeyRef: { name: university-secrets, key: RABBITMQ_PASS }
+            - name: ConnectionStrings__StudentsAPIContext
+              value: "Server=sqldata;Database=StudentDB;User Id=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+            - name: RabbitMQ__Uri
+              value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASS)@rabbitmq:5672"
+            - name: Seq__Uri
+              value: "http://seq:5341"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+# Service exposes REST (8080) and gRPC (5001) ports to other pods
+apiVersion: v1
+kind: Service
+metadata:
+  name: studentsapi
+  namespace: university
+spec:
+  selector:
+    app: studentsapi
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+    - name: grpc
+      port: 5001
+      targetPort: 5001
+  type: ClusterIP

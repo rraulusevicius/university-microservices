@@ -1,0 +1,24 @@
+﻿@model List<WebApp.Models.Course>
+
+<h2>Courses</h2>
+<a asp-action="Create" class="btn btn-success mb-3">Add New Course (MassTransit)</a>
+<a asp-action="Enroll" class="btn btn-primary mb-3">Enroll Student (RabbitMQ)</a>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Course ID</th>
+            <th>Title</th>
+            <th>Credits</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var c in Model)
+        {
+            <tr>
+                <td>@c.CourseID</td>
+                <td>@c.Title</td>
+                <td>@c.Credits</td>
+            </tr>
+        }
+    </tbody>
+</table>

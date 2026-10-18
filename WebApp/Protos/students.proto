@@ -1,0 +1,38 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "StudentsAPI.Protos";
+
+package students;
+
+service StudentGrpc {
+  rpc GetStudent (StudentRequest) returns (StudentReply);
+  rpc GetAllStudents (Empty) returns (StudentListReply);
+}
+
+message Empty {}
+
+message StudentRequest {
+  int32 id = 1;
+}
+
+message StudentReply {
+  int32 id = 1;
+  string lastName = 2;
+  string firstMidName = 3;
+  string enrollmentDate = 4;
+  repeated EnrollmentReply enrollments = 5;
+}
+
+message EnrollmentReply {
+  int32 enrollmentID = 1;
+  int32 courseID = 2;
+  string title = 3;
+  int32 credits = 4;
+  int32 studentID = 5;
+  int32 grade = 6;
+  bool hasGrade = 7;
+}
+
+message StudentListReply {
+  repeated StudentReply students = 1;
+}

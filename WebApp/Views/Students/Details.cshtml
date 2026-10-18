@@ -1,0 +1,33 @@
+﻿@model WebApp.Models.Student
+
+<h2>@Model.FirstMidName @Model.LastName</h2>
+<p>Enrolled: @Model.EnrollmentDate.ToString("yyyy-MM-dd")</p>
+
+<h4>Enrollments</h4>
+@if (Model.Enrollments != null && Model.Enrollments.Any())
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Course</th>
+                <th>Credits</th>
+                <th>Grade</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var e in Model.Enrollments)
+            {
+                <tr>
+                    <td>@e.Title</td>
+                    <td>@e.Credits</td>
+                    <td>@(e.Grade.HasValue ? ((WebApp.Models.Grade)e.Grade).ToString() : "N/A")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No enrollments found.</p>
+}
+<a asp-action="Index" class="btn btn-secondary">Back to List</a>

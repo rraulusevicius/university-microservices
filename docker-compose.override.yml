@@ -1,0 +1,73 @@
+services:
+  coursesapi-individual:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__CoursesApiContext=Server=sqldata-individual;Database=CoursesDB;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True
+      - RabbitMQ__Uri=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq-individual:5672
+      - Seq__Uri=http://seq-individual:5341
+    ports:
+      - "6081:8080"
+
+  studentsapi-individual:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__StudentsAPIContext=Server=sqldata-individual;Database=StudentDB;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True
+      - RabbitMQ__Uri=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq-individual:5672
+      - Seq__Uri=http://seq-individual:5341
+    ports:
+      - "6082:8080"
+      - "6083:5001"
+
+  apigateway-individual:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Seq__Uri=http://seq-individual:5341
+    ports:
+      - "6080:8080"
+
+  sqldata-individual:
+    environment:
+      - SA_PASSWORD=${SA_PASSWORD}
+      - ACCEPT_EULA=Y
+    ports:
+      - "2433:1433"
+    volumes:
+      - labind-sqldata:/var/opt/mssql
+
+  rabbitmq-individual:
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+    ports:
+      - "6672:5672"
+      - "16672:15672"
+    volumes:
+      - labind-rabbitmq:/var/lib/rabbitmq
+
+  seq-individual:
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_NOAUTHENTICATION=true
+    ports:
+      - "6340:80"
+      - "6341:5341"
+    volumes:
+      - labind-seq:/data
+  
+  webapp-individual:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Services__StudentsAPI=http://studentsapi-individual:8080
+      - Services__CoursesAPI=http://coursesapi-individual:8080
+      - Services__StudentsGrpc=http://studentsapi-individual:5001
+      - Seq__Uri=http://seq-individual:5341
+    ports:
+      - "6090:8080"
+
+volumes:
+  labind-sqldata:
+    external: false
+  labind-rabbitmq:
+    external: false
+  labind-seq:
+    external: false

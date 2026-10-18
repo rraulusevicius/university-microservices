@@ -1,0 +1,27 @@
+﻿@model List<StudentsAPI.Protos.StudentReply>
+
+<h2>Students (via gRPC)</h2>
+<p class="text-muted">This page fetches data using gRPC instead of REST</p>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Last Name</th>
+            <th>First Name</th>
+            <th>Enrollment Date</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in Model)
+        {
+            <tr>
+                <td>@s.Id</td>
+                <td>@s.LastName</td>
+                <td>@s.FirstMidName</td>
+                <td>@s.EnrollmentDate</td>
+                <td><a asp-action="Details" asp-route-id="@s.Id" class="btn btn-sm btn-success">Details (gRPC)</a></td>
+            </tr>
+        }
+    </tbody>
+</table>

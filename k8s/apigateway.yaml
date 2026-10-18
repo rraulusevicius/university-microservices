@@ -1,0 +1,123 @@
+# apigateway.yaml
+# Ocelot API Gateway - single entry point for all client requests
+# Routes /Students -> studentsapi, /Courses -> coursesapi
+# Hosts Health Check UI dashboard at /health-ui
+# Uses ConfigMap to override ocelot.json with K8s service names
+---
+# ConfigMap stores the ocelot.json routing configuration
+# This allows us to update routes without rebuilding the image
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ocelot-config
+  namespace: university
+data:
+  ocelot.json: |
+    {
+      "Routes": [
+        {
+          "DownstreamPathTemplate": "/api/Students",
+          "DownstreamScheme": "http",
+          "DownstreamHostAndPorts": [{ "Host": "studentsapi", "Port": 8080 }],
+          "UpstreamPathTemplate": "/Students",
+          "UpstreamHttpMethod": [ "Get", "Post" ]
+        },
+        {
+          "DownstreamPathTemplate": "/api/Students/{id}",
+          "DownstreamScheme": "http",
+          "DownstreamHostAndPorts": [{ "Host": "studentsapi", "Port": 8080 }],
+          "UpstreamPathTemplate": "/Students/{id}",
+          "UpstreamHttpMethod": [ "Get", "Put", "Delete" ]
+        },
+        {
+          "DownstreamPathTemplate": "/api/Courses",
+          "DownstreamScheme": "http",
+          "DownstreamHostAndPorts": [{ "Host": "coursesapi", "Port": 8080 }],
+          "UpstreamPathTemplate": "/Courses",
+          "UpstreamHttpMethod": [ "Get", "Post" ]
+        },
+        {
+          "DownstreamPathTemplate": "/api/Courses/{id}",
+          "DownstreamScheme": "http",
+          "DownstreamHostAndPorts": [{ "Host": "coursesapi", "Port": 8080 }],
+          "UpstreamPathTemplate": "/Courses/{id}",
+          "UpstreamHttpMethod": [ "Get", "Put", "Delete" ]
+        },
+        {
+          "DownstreamPathTemplate": "/api/Enrollment",
+          "DownstreamScheme": "http",
+          "DownstreamHostAndPorts": [{ "Host": "coursesapi", "Port": 8080 }],
+          "UpstreamPathTemplate": "/Enrollment",
+          "UpstreamHttpMethod": [ "Post" ]
+        }
+      ],
+      "GlobalConfiguration": {}
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apigateway
+  namespace: university
+  labels:
+    app: apigateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apigateway
+  template:
+    metadata:
+      labels:
+        app: apigateway
+    spec:
+      containers:
+        - name: apigateway
+          image: apigateway-individual:v2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: Seq__Uri
+              value: "http://seq:5341"
+            - name: HealthChecks__StudentsAPI
+              value: "http://studentsapi:8080"
+            - name: HealthChecks__CoursesAPI
+              value: "http://coursesapi:8080"
+            - name: HealthChecks__ApiGateway
+              value: "http://apigateway:8080"
+          # Mount the ConfigMap as ocelot.json, overriding the baked-in file
+          volumeMounts:
+            - name: ocelot-config-volume
+              mountPath: /app/ocelot.json
+              subPath: ocelot.json
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+      volumes:
+        - name: ocelot-config-volume
+          configMap:
+            name: ocelot-config
+---
+# NodePort service exposes the gateway externally on port 30080
+# Accessible at http://localhost:30080 from host machine
+apiVersion: v1
+kind: Service
+metadata:
+  name: apigateway
+  namespace: university
+spec:
+  selector:
+    app: apigateway
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      nodePort: 30080
+  type: NodePort

@@ -1,0 +1,7 @@
+# namespace.yaml
+# Creates an isolated namespace for our university microservices
+# This keeps our resources separate from other K8s workloads
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: university

@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "CoursesAPI": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:54567;http://localhost:54570"
+    }
+  }
+}
